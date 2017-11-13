@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+author: "Theodore Andrew"
+date: "11/9/2017"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(rvest)
+
+nba_team = read.csv("/Users/theodoreandrew/Downloads/16-17 NBA team.csv")
+
+nba_team_update = select(nba_team, Team, AST, FG.)
+
+Abb_team = c("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+
+nba_team_add_abbr = mutate(nba_team_update, Abb_team)
+colnames(nba_team_add_abbr)[2] = "team_AST"
+colnames(nba_team_add_abbr)[3] = "team_FG"
+```
+
+
+```{r, eval = FALSE}
+nba_stat_player = read_html("https://www.basketball-reference.com/leagues/NBA_2017_per_minute.html")
+
+nba_tables = nba_stat_player %>% html_node("#per_minute_stats") %>% html_table()
+
+nba_tables_cleaned = nba_tables[!(nba_tables$Player == "Player" | nba_tables$Tm == "TOT"), -1]
+
+nba_no_duplicate = nba_tables_cleaned[!duplicated(nba_tables_cleaned$Player, fromLast = TRUE),]
+
+write.csv(nba_no_duplicate, "NBA Players stat 2016-2017 cleaned.csv")
+```
+
+```{r}
+nba_player_stat = read.csv("/Users/theodoreandrew/Documents/AlphaProject/NBA players stat 2016-2017.csv")
+colnames(nba_player_stat)[4] = "Abb_team"
+
+merged_nba_player_stat = dplyr::full_join(nba_player_stat, nba_team_add_abbr, by = "Abb_team")
+write.csv(merged_nba_player_stat, "Merge NBA Stat Player Dataset.csv")
+```
+
