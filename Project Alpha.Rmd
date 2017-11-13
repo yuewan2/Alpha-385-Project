@@ -34,10 +34,9 @@ write.csv(nba_no_duplicate, "NBA Players stat 2016-2017 cleaned.csv")
 ```
 
 ```{r}
-nba_player_stat = read.csv("/Users/theodoreandrew/Documents/AlphaProject/NBA players stat 2016-2017.csv")
-colnames(nba_player_stat)[4] = "Abb_team"
+colnames(nba_no_duplicate)[4] = "Abb_team"
 
-merged_nba_player_stat = dplyr::full_join(nba_player_stat, nba_team_add_abbr, by = "Abb_team")
+merged_nba_player_stat = dplyr::full_join(nba_no_duplicate, nba_team_add_abbr, by = "Abb_team")
 write.csv(merged_nba_player_stat, "Merge NBA Stat Player Dataset.csv")
 ```
 
