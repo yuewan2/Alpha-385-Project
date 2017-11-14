@@ -33,10 +33,43 @@ nba_no_duplicate = nba_tables_cleaned[!duplicated(nba_tables_cleaned$Player, fro
 write.csv(nba_no_duplicate, "NBA Players stat 2016-2017 cleaned.csv")
 ```
 
-```{r}
+```{r, eval = FALSE}
 colnames(nba_no_duplicate)[4] = "Abb_team"
 
 merged_nba_player_stat = dplyr::full_join(nba_no_duplicate, nba_team_add_abbr, by = "Abb_team")
 write.csv(merged_nba_player_stat, "Merge NBA Stat Player Dataset.csv")
+```
+
+```{r}
+player_dataset = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Merge NBA Stat Player Dataset.csv")
+
+player_dataselect = select(player_dataset, Player, Pos, Age, Team, Abb_team, AST, FG, FT, PTS, FGA, TOV, FTA, TRB, ORB, MP, team_AST, team_FG, BLK, STL, PF)
+```
+
+
+```{r, eval = FALSE}
+league_stat = read_html("https://www.basketball-reference.com/leagues/NBA_stats.html")
+
+league_stat_table = league_stat %>% html_node("#stats") %>% html_table()
+
+colnames(league_stat_table)[1] = "RK"
+
+league_stat_cleaned = league_stat_table[!(league_stat_table$RK == "Rk" | league_stat_table$RK == ""), ]
+
+league_dataselect = league_stat_cleaned %>% filter(Season == "2016-17") %>% select(Season, League, FG, FGA, FT, FTA, ORB, DRB, TRB, AST, STL, BLK, TOV, PF, PTS)
+
+write.csv(league_dataselect, "NBA League 2016-2017 Stat.csv")
+```
+
+
+```{r}
+league = read.csv("/Users/theodoreandrew/Documents/AlphaProject/NBA League 2016-2017 Stat.csv")
+```
+
+
+```{r}
+factor = (2 / 3) - (0.5 * (league$AST / league$FG) / (2 * (league$FG) / league$FT))
+
+VOP = league$PTS / (league$FGA - league$ORB + league$TOV + 0.44 * league$FTA)
 ```
 
