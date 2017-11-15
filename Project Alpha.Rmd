@@ -43,11 +43,11 @@ write.csv(merged_nba_player_stat, "Merge NBA Stat Player Dataset.csv")
 ```{r}
 player_dataset = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Merge NBA Stat Player Dataset.csv")
 
-player_dataselect = select(player_dataset, Player, Pos, Age, Team, Abb_team, AST, FG, FT, PTS, FGA, TOV, FTA, TRB, ORB, MP, team_AST, team_FG, BLK, STL, PF)
+player_dataselect = select(player_dataset, Player, Pos, Age, Team, Abb_team, MP, PTS, AST, FG, FT, X3P, FGA, TOV, FTA, TRB, ORB, BLK, STL, PF, team_AST, team_FG)
 ```
 
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 league_stat = read_html("https://www.basketball-reference.com/leagues/NBA_stats.html")
 
 league_stat_table = league_stat %>% html_node("#stats") %>% html_table()
@@ -55,8 +55,12 @@ league_stat_table = league_stat %>% html_node("#stats") %>% html_table()
 colnames(league_stat_table)[1] = "RK"
 
 league_stat_cleaned = league_stat_table[!(league_stat_table$RK == "Rk" | league_stat_table$RK == ""), ]
+27
 
-league_dataselect = league_stat_cleaned %>% filter(Season == "2016-17") %>% select(Season, League, FG, FGA, FT, FTA, ORB, DRB, TRB, AST, STL, BLK, TOV, PF, PTS)
+
+colnames(league_stat_cleaned)[27] = "team_pace"
+
+league_tmpace = league_stat_cleaned %>% filter(Season == "2016-17") %>% select(team_pace)
 
 write.csv(league_dataselect, "NBA League 2016-2017 Stat.csv")
 ```
@@ -64,6 +68,11 @@ write.csv(league_dataselect, "NBA League 2016-2017 Stat.csv")
 
 ```{r}
 league = read.csv("/Users/theodoreandrew/Documents/AlphaProject/NBA League 2016-2017 Stat.csv")
+nba_tmPace = read.csv("/Users/theodoreandrew/Documents/AlphaProject/nba_team_pace.csv")
+nba_lgPace = read.csv("/Users/theodoreandrew/Documents/AlphaProject/league pace.csv")
+nba_lgPace_filt = nba_lgPace %>% filter(Season == "2016-17")
+colnames(nba_lgPace_filt)[3] = "lg_Pace"
+
 ```
 
 
@@ -71,5 +80,50 @@ league = read.csv("/Users/theodoreandrew/Documents/AlphaProject/NBA League 2016-
 factor = (2 / 3) - (0.5 * (league$AST / league$FG) / (2 * (league$FG) / league$FT))
 
 VOP = league$PTS / (league$FGA - league$ORB + league$TOV + 0.44 * league$FTA)
+
+DRB_PERCENT = (league$TRB - league$ORB) / league$TRB
+
+uPER_value = seq(length(player_dataselect$Player))
+  
+uPER_value = (1 / player_dataselect$MP) * ( player_dataselect$X3P + ((2/3) * player_dataselect$AST) + ((2 - factor * (player_dataselect$team_AST / player_dataselect$team_FG)) * player_dataselect$FG) + (player_dataselect$FT * 0.5 * (1 + (1 - (player_dataselect$team_AST / player_dataselect$team_FG))) + ((2/3) * (player_dataselect$team_AST / player_dataselect$team_FG))) - (VOP * player_dataselect$TOV) - (VOP * DRB_PERCENT * (player_dataselect$FGA - player_dataselect$FG)) - (VOP * 0.44 * (0.44 + (0.56 * DRB_PERCENT)) * (player_dataselect$FTA - player_dataselect$FT)) + (VOP * (1 - DRB_PERCENT) * (player_dataselect$TRB - player_dataselect$ORB)) + (VOP * DRB_PERCENT * player_dataselect$ORB) + (VOP * player_dataselect$STL) + (VOP * DRB_PERCENT * player_dataselect$BLK) - (player_dataselect$PF * ((league$FT / league$PF) - 0.44 * (league$FTA / league$PF) * VOP)))
+```
+
+
+```{r}
+pace_adjustment = seq(length(nba_tmPace$Team))
+for(i in 1:length(nba_tmPace$Team)){
+  pace_adjustment[i] = nba_lgPace_filt$lg_Pace[1] / nba_tmPace$Pace[i]
+}
+
+nba_tmPace = mutate(nba_tmPace, pace_adjustment)
+nba_tmPace = select(nba_tmPace, -DRB.)
+merged_player_stat = dplyr::full_join(player_dataselect, nba_tmPace, by = "Team")
+merged_player_stat = na.omit(merged_player_stat)
+
+
+league_average_PER = sum(uPER_value) / length(uPER_value)
+```
+
+
+```{r, eval = FALSE}
+PER_value = seq(length(merged_player_stat$Team))
+
+PER_value = uPER_value * merged_player_stat$pace_adjustment
+PER_value
+
+merged_player_stat = mutate(merged_player_stat, PER_value)
+merged_player_stat
+
+write.csv(merged_player_stat, "Player with PER.csv")
+
+```
+
+
+```{r}
+player_PER = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Player with PER.csv")
+
+team_PER = player_PER %>% group_by(Team, Abb_team) %>% summarise(PER = sum(PER_value))
+
+write.csv(team_PER, "Team PER 2016-2017.csv")
 ```
 
