@@ -119,11 +119,36 @@ write.csv(merged_player_stat, "Player with PER.csv")
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 player_PER = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Player with PER.csv")
 
 team_PER = player_PER %>% group_by(Team, Abb_team) %>% summarise(PER = sum(PER_value))
 
 write.csv(team_PER, "Team PER 2016-2017.csv")
+```
+
+
+
+```{r, eval = FALSE}
+team_data = read.csv("/Users/theodoreandrew/Documents/AlphaProject/2016-2017_Team_Data.csv")
+team_data = team_data[,-1]
+colnames(team_data)[1] = "Team"
+team_data_WR = select(team_data, Team, WIN.)
+
+team_data_complete = dplyr::full_join(team_PER, team_data_WR, by = "Team")
+write.csv(team_data_complete, "Team Win Ratio and PER data.csv")
+```
+
+
+```{r}
+team_data_lm = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Team Win Ratio and PER data.csv")
+team_data_lm = team_data_lm[,-1]
+colnames(team_data_lm)[4] = "win_ratio"
+
+fit_team = lm(PER ~ win_ratio, data = team_data_lm)
+summary(fit_team)
+
+plot(team_data_lm$win_ratio, team_data_lm$PER)
+abline(fit_team)
 ```
 
