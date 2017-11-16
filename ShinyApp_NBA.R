@@ -75,9 +75,60 @@ server = shinyServer(function(input, output) {
   #  }
   #})
   
-  output$plot = renderPlot({
-    ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, WIN_Ratio, fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  active_var = reactive({
+    if(input$var_chosen == "W"){
+      Home_Guest_Visual$W
+    }else if(input$var_chosen == "L"){
+      Home_Guest_Visual$L
+    }else if(input$var_chosen == "WIN_Ratio"){
+      Home_Guest_Visual$WIN_Ratio
+    }else if(input$var_chosen == "MIN"){
+      Home_Guest_Visual$MIN
+    }else if(input$var_chosen == "PTS"){
+      Home_Guest_Visual$PTS
+    }else if(input$var_chosen == "FGM"){
+      Home_Guest_Visual$FGM
+    }else if(input$var_chosen == "FGA"){
+      Home_Guest_Visual$FGA
+    }else if(input$var_chosen == "FG_Ratio"){
+      Home_Guest_Visual$FG_Ratio
+    }else if(input$var_chosen == "X3PM"){
+      Home_Guest_Visual$X3PM
+    }else if(input$var_chosen == "X3PA"){
+      Home_Guest_Visual$X3PA
+    }else if(input$var_chosen == "X3P_Ratio"){
+      Home_Guest_Visual$X3P_Ratio
+    }else if(input$var_chosen == "FTM"){
+      Home_Guest_Visual$FTM
+    }else if(input$var_chosen == "FTA"){
+      Home_Guest_Visual$FTA
+    }else if(input$var_chosen == "OREB"){
+      Home_Guest_Visual$OREB
+    }else if(input$var_chosen == "DREB"){
+      Home_Guest_Visual$DREB
+    }else if(input$var_chosen == "REB"){
+      Home_Guest_Visual$REB
+    }else if(input$var_chosen == "AST"){
+      Home_Guest_Visual$AST
+    }else if(input$var_chosen == "TOV"){
+      Home_Guest_Visual$TOV
+    }else if(input$var_chosen == "STL"){
+      Home_Guest_Visual$STL
+    }else if(input$var_chosen == "BLK"){
+      Home_Guest_Visual$BLK
+    }else if(input$var_chosen == "BLKA"){
+      Home_Guest_Visual$BLKA
+    }else if(input$var_chosen == "PF"){
+      Home_Guest_Visual$PF
+    }else if(input$var_chosen == "PFD"){
+      Home_Guest_Visual$PFD
+    }
   })
+  
+  output$plot = renderPlot({
+    ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, active_var(), fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  })
+  
   
   
 })
