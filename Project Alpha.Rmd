@@ -85,7 +85,7 @@ DRB_PERCENT = (league$TRB - league$ORB) / league$TRB
 
 uPER_value = seq(length(player_dataselect$Player))
   
-uPER_value = (1 / player_dataselect$MP) * ( player_dataselect$X3P + ((2/3) * player_dataselect$AST) + ((2 - factor * (player_dataselect$team_AST / player_dataselect$team_FG)) * player_dataselect$FG) + (player_dataselect$FT * 0.5 * (1 + (1 - (player_dataselect$team_AST / player_dataselect$team_FG))) + ((2/3) * (player_dataselect$team_AST / player_dataselect$team_FG))) - (VOP * player_dataselect$TOV) - (VOP * DRB_PERCENT * (player_dataselect$FGA - player_dataselect$FG)) - (VOP * 0.44 * (0.44 + (0.56 * DRB_PERCENT)) * (player_dataselect$FTA - player_dataselect$FT)) + (VOP * (1 - DRB_PERCENT) * (player_dataselect$TRB - player_dataselect$ORB)) + (VOP * DRB_PERCENT * player_dataselect$ORB) + (VOP * player_dataselect$STL) + (VOP * DRB_PERCENT * player_dataselect$BLK) - (player_dataselect$PF * ((league$FT / league$PF) - 0.44 * (league$FTA / league$PF) * VOP)))
+uPER_value = (1 / player_dataselect$MP) * ( player_dataselect$X3P + ((2/3) * player_dataselect$AST) + ((2 - factor * (player_dataselect$team_AST / player_dataselect$team_FG)) * player_dataselect$FG) + (player_dataselect$FT * 0.5 * (1 + (1 - (player_dataselect$team_AST / player_dataselect$team_FG))) + ((2/3) * (player_dataselect$team_AST / player_dataselect$team_FG))) - (VOP * player_dataselect$TOV) - (VOP * DRB_PERCENT * (player_dataselect$FGA - player_dataselect$FG)) - (VOP * 0.44 * (0.44 + (0.56 * DRB_PERCENT)) * (player_dataselect$FTA - player_dataselect$FT)) + (VOP * (1 - DRB_PERCENT) * (player_dataselect$TRB - player_dataselect$ORB)) + (VOP * DRB_PERCENT * player_dataselect$ORB) + (VOP * player_dataselect$STL * (9 / 2.65)) + (VOP * DRB_PERCENT * player_dataselect$BLK) - (player_dataselect$PF * ((league$FT / league$PF) - 0.44 * (league$FTA / league$PF) * VOP)))
 ```
 
 
@@ -99,9 +99,6 @@ nba_tmPace = mutate(nba_tmPace, pace_adjustment)
 nba_tmPace = select(nba_tmPace, -DRB.)
 merged_player_stat = dplyr::full_join(player_dataselect, nba_tmPace, by = "Team")
 merged_player_stat = na.omit(merged_player_stat)
-
-
-league_average_PER = sum(uPER_value) / length(uPER_value)
 ```
 
 
@@ -122,6 +119,7 @@ write.csv(merged_player_stat, "Player with PER.csv")
 ```{r, eval = FALSE}
 player_PER = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Player with PER.csv")
 
+player_PER = player_PER[,-1]
 team_PER = player_PER %>% group_by(Team, Abb_team) %>% summarise(PER = sum(PER_value))
 
 write.csv(team_PER, "Team PER 2016-2017.csv")
@@ -145,7 +143,7 @@ team_data_lm = read.csv("/Users/theodoreandrew/Documents/AlphaProject/Team Win R
 team_data_lm = team_data_lm[,-1]
 colnames(team_data_lm)[4] = "win_ratio"
 
-fit_team = lm(PER ~ win_ratio, data = team_data_lm)
+fit_team = lm(win_ratio ~ PER, data = team_data_lm)
 summary(fit_team)
 
 plot(team_data_lm$win_ratio, team_data_lm$PER)
