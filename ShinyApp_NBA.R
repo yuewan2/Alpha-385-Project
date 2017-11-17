@@ -2,6 +2,8 @@ library(shiny)
 library(ggplot2)
 
 Home_Guest_Visual = read.csv("Home_Guest_Visual.csv")
+Home_Guest_Scatter = read.csv("Home_Guest_Scatter.csv")
+Color = Home_Guest_Visual$TEAM[1:30]
 
 # Define UI ----
 ui = shinyUI(fluidPage(
@@ -69,13 +71,12 @@ ui = shinyUI(fluidPage(
 
 # Define server logic ----
 server = shinyServer(function(input, output) {
-  #active_graph = reactive({
-  #  if(input$var_chosen == "W"){
-  #    ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, W, fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
-  #  }
+  #observe({
+  #  cat("Examing the performance difference on: ", input$var_chosen)
   #})
   
   active_var = reactive({
+    req(input$var_chosen != ".")
     if(input$var_chosen == "W"){
       Home_Guest_Visual$W
     }else if(input$var_chosen == "L"){
@@ -126,10 +127,13 @@ server = shinyServer(function(input, output) {
   })
   
   output$plot = renderPlot({
-    ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, active_var(), fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+    if(input$choice == "Barplot"){
+      ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, active_var(), fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + ylab("Variable_Chosen")
+    }else{
+      ggplot() + geom_point(aes(y = active_var()[1:30], x = active_var()[31:60], color = Home_Guest_Visual$TEAM[1:30])) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlab("Guest Performance") + ylab("Home Performance") #+ expand_limits(x = 0, y = 0)
+      #ggplot(Home_Guest_Scatter) + geom_point(aes(x = WIN_Ratio_Guest, y = WIN_Ratio_Home, color = TEAM)) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlim(0, 1) + ylim(0, 1) + xlab("Win_Ratio_Guest") + ylab("Win_Ratio_Home")
+    }
   })
-  
-  
   
 })
 
