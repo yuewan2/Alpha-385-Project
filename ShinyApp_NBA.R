@@ -23,7 +23,8 @@ ui = shinyUI(fluidPage(
         )
       ),
       radioButtons(inputId="choice", label="What would you like to see?", 
-                   choices=c("Scatterplot","Barplot"))
+                   choices=c("Scatterplot","Barplot")),
+      submitButton("Generate the plot")
     ),
     mainPanel(
       tabsetPanel(
@@ -131,7 +132,6 @@ server = shinyServer(function(input, output) {
       ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, active_var(), fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + ylab("Variable_Chosen")
     }else{
       ggplot() + geom_point(aes(y = active_var()[1:30], x = active_var()[31:60], color = Home_Guest_Visual$TEAM[1:30])) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlab("Guest Performance") + ylab("Home Performance") #+ expand_limits(x = 0, y = 0)
-      #ggplot(Home_Guest_Scatter) + geom_point(aes(x = WIN_Ratio_Guest, y = WIN_Ratio_Home, color = TEAM)) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlim(0, 1) + ylim(0, 1) + xlab("Win_Ratio_Guest") + ylab("Win_Ratio_Home")
     }
   })
   
