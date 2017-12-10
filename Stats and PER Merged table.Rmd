@@ -1,0 +1,39 @@
+---
+title: "Merged Stats and PER"
+author: "Theodore Andrew"
+date: "12/9/2017"
+output: html_document
+---
+
+```{r}
+#To merge players' stats table with PER data table
+merged_stat_PER = dplyr::full_join(nba_players_stats_final, PER_table_final, by = "Player")
+
+#----------------------------------------------------------------------------------------------
+#To get the data about teams names
+nba_teams = read.csv("16-17 NBA team.csv")
+
+nba_teams_name = select(nba_teams, Team)
+
+team_abbr = nba_players_stats_final %>% group_by(Tm) %>% summarise(a = sum(as.numeric(PTS)))
+
+team_abbr = team_abbr %>% select(-a)
+
+merged_team = cbind(nba_teams_name, team_abbr)
+merged_team[4,2] = "CHO"
+merged_team[5,2] = "CHI"
+
+#To merge teams names table with stats and PER table
+merged_stat_team = dplyr::full_join(merged_stat_PER, merged_team, by = "Tm")
+
+merged_stat_team$PTS = as.numeric(merged_stat_team$PTS)
+merged_stat_team$AST = as.numeric(merged_stat_team$AST)
+merged_stat_team$TRB = as.numeric(merged_stat_team$TRB)
+merged_stat_team$BLK = as.numeric(merged_stat_team$BLK)
+merged_stat_team$STL = as.numeric(merged_stat_team$STL)
+merged_stat_team$TOV = as.numeric(merged_stat_team$TOV)
+merged_stat_team$PER = as.numeric(merged_stat_team$PER)
+
+View(merged_stat_team)
+```
+

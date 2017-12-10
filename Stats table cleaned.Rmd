@@ -1,0 +1,38 @@
+---
+title: "Players Stats"
+author: "Theodore Andrew"
+date: "12/9/2017"
+output: html_document
+---
+
+```{r}
+#First table that we scrap from website
+stats = read_html("https://www.basketball-reference.com/leagues/NBA_2017_per_minute.html")
+
+nba_players_stats = stats %>% html_node("#per_minute_stats") %>% html_table()
+
+colnames(nba_players_stats)[1] = "RK"
+
+
+View(nba_players_stats)
+
+#----------------------------------------------------------------------------------------------
+
+#To clean the data and to remove duplication on players' name
+nba_players_stats_cleaned = nba_players_stats[!(PER_table$RK == "Rk"), ]
+
+nba_players_stats_cleaned = nba_players_stats_cleaned[!(PER_table_cleaned$Player == "Player" | PER_table_cleaned$Tm == "TOT"), -1]
+
+
+nba_players_stats_cleaned = nba_players_stats_cleaned[!duplicated(nba_players_stats_cleaned$Player, fromLast = TRUE),]
+
+View(nba_players_stats_cleaned)
+
+#----------------------------------------------------------------------------------------------
+
+#To select variable from players' stats table that we want to analyze
+nba_players_stats_final = select(nba_players_stats_cleaned, Player, Pos, Age, Tm, PTS, AST, TRB, BLK, STL, TOV)
+
+View(nba_players_stats_final)
+```
+

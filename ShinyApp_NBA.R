@@ -2,8 +2,10 @@ library(shiny)
 library(ggplot2)
 
 Home_Guest_Visual = read.csv("Home_Guest_Visual.csv")
-Home_Guest_Scatter = read.csv("Home_Guest_Scatter.csv")
+# Home_Guest_Scatter = read.csv("Home_Guest_Scatter.csv")
 Color = Home_Guest_Visual$TEAM[1:30]
+team_stats = read.csv("Team_Stats_2016_2017.csv")[,-1]
+regression_predictor = colnames(team_stats)[4:10]
 
 # Define UI ----
 ui = shinyUI(
@@ -95,17 +97,25 @@ ui = shinyUI(
                         strong("Simple"),
                         "Linear Regression model with Win Ratio as response.",
                         p("In the below, you are going to choose your own predictor from are ASR, REB, BLK, STL, TOV and PER."),
-                        p("Our recommended SLR predictor is PER, since it is a clever way of combining most of the NBA performance stats (See detail in dictionary)")
-                        #fluidRow(
-                        #  column(6,
-                        #         selectInput("var_slr", label = "Variable", c(None = '.', names(Home_Guest_Visual)[4:27]))      
-                        #        )
-                        #)
+                        p("Our recommended SLR predictor is PER, since it is a clever way of combining most of the NBA performance stats (See detail in dictionary)"),
+                        
+                        selectInput("indep", label = "Variable", choices = c(None = '.', regression_predictor)),
+                        radioButtons(
+                          "line",
+                          "Do you want to include the regression line into the regression graph?",
+                          choices = c("Yes", "No")
+                        ),
+                        submitButton("Generate")
+                                
                       ),
                       mainPanel(
                         tabsetPanel(
-                          tabPanel("Summary"),
-                          tabPanel("Graph")
+                          tabPanel("Summary", 
+                                   h3("Summary of the Simple Linear Regression"),
+                                   verbatimTextOutput("summary_SL")),
+                          tabPanel("Graph", 
+                                   h3("Graph of the Simple Linear Regression"),
+                                   plotOutput("graph_SL"))
                         )
                       )
                     )
@@ -122,14 +132,26 @@ ui = shinyUI(
                        "In this section, we are going to generate a",
                        strong("multiple"), 
                        "linear regression model towards the result of Win Ratio.",
-                       p("For Win Ratio as a response, the predictors you can choose from ASR, PTS, REB, BLK, STL, TOV and PER."),
-                       p("Our recommended SLR predictor is PER, since it is a clever way of combining most ")
-                       
+                       p("For Win Ratio as a response, the predictors you can choose from AST, PTS, REB, BLK, STL, TOV and PER."),
+                       p("In order for the MLR to be generated, you must choose exactly 7 variables."),
+                       p("Our recommended SLR predictor is PER, since it is a clever way of combining most "),
+                       selectInput("indep1", label = "Variable 1", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep2", label = "Variable 2", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep3", label = "Variable 3", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep4", label = "Variable 4", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep5", label = "Variable 5", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep6", label = "Variable 6", choices = c(None = '.', regression_predictor)),
+                       selectInput("indep7", label = "Variable 7", choices = c(None = '.', regression_predictor)),
+                       submitButton("Generate")
                      ),
                      mainPanel(
                        tabsetPanel(
-                         tabPanel("Summary"),
-                         tabPanel("Graph")
+                         tabPanel("Summary", 
+                                  h3("Summary of the Multiple Linear Regression"),
+                                  verbatimTextOutput("summary_ML")),
+                         tabPanel("Graph", 
+                                  h3("Graph of the Multiple Linear Regression"),
+                                  verbatimTextOutput("graph_ML"))
                        )
                      )
                    )
@@ -199,7 +221,17 @@ server = shinyServer(function(input, output) {
     }
   })
   
-  # ------------- Plot output for Home/Away Effect -------------
+  fit_SL = reactive({
+    req(input$indep != '.')
+    lm(as.formula(paste("Win_Ratio", "~", input$indep)), data = team_stats)
+  })
+  
+  fit_ML = reactive({
+    req(input$indep1 != '.', input$indep2 != '.', input$indep3 != '.', input$indep4 != '.', input$indep5 != '.', input$indep6 != '.', input$indep7 != '.')
+    lm(as.formula(paste("Win_Ratio", "~", input$indep1, "+", input$indep2, "+", input$indep3, "+", input$indep4, "+", input$indep5, "+", input$indep6, "+", input$indep7)), data = team_stats)
+  })
+  
+  # ------------- Plot output for Home/Away Effect -----------------
   
   output$plot = renderPlot({
     if(input$choice == "Barplot"){
@@ -209,6 +241,37 @@ server = shinyServer(function(input, output) {
     }
   })
   
+  # ------------- Summary for Simple Linear Regression -------------
+  
+  output$summary_SL = renderPrint({
+    req(input$indep != '.')
+    summary(fit_SL())
+  })
+  
+  output$graph_SL = renderPlot({
+    req(input$indep != '.')
+    if(input$line == "Yes") {
+      ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point(size = 0.5) + geom_smooth(method = "lm") + geom_text(label = team_stats$Team_Abbr, hjust = 0, vjust = 0)
+    } else{
+      ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point(size = 0.5) + geom_text(label = team_stats$Team_Abbr, hjust = 0, vjust = 0)
+    }
+  })
+  
+  # ------------- Summary for Multiple Linear Regression -------------
+  
+  output$summary_ML = renderPrint({
+    req(input$indep1 != '.', input$indep2 != '.', input$indep3 != '.', input$indep4 != '.', input$indep5 != '.', input$indep6 != '.')
+    summary(fit_ML())
+  })
+  
+  # output$graph_SL = renderPlot({
+  #   req(input$indep != '.')
+  #   if(input$line == "Yes") {
+  #     ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point() + geom_smooth(method = "lm")
+  #   } else{
+  #     ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point()
+  #   }
+  # })
   
   
 })

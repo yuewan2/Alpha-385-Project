@@ -1,0 +1,32 @@
+---
+title: "PER Player"
+author: "Theodore Andrew"
+date: "12/9/2017"
+output: html_document
+---
+
+```{r}
+#To get the information about players' PER
+PER_data = read_html("https://www.basketball-reference.com/leagues/NBA_2017_advanced.html")
+
+PER_table = PER_data %>% html_node("#advanced_stats") %>% html_table(header = TRUE)
+
+#----------------------------------------------------------------------------------------------
+#To clean the PER table and to remove the players' name duplication
+colnames(PER_table)[1] = "RK"
+
+PER_table_cleaned = PER_table[!(PER_table$RK == "Rk"), ]
+
+PER_table_cleaned = PER_table_cleaned[!(PER_table_cleaned$Player == "Player" | PER_table_cleaned$Tm == "TOT"), -1]
+
+PER_table_cleaned = PER_table_cleaned[!duplicated(PER_table_cleaned$Player, fromLast = TRUE),]
+
+View(PER_table_cleaned)
+
+#----------------------------------------------------------------------------------------------
+#To select variable that we want to analyze
+PER_table_final = select(PER_table_cleaned, Player, PER)
+
+View(PER_table_final)
+```
+
