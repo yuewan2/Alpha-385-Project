@@ -73,8 +73,7 @@ ui = shinyUI(
                                  p(strong("PER"), "- Player Efficiency Rating"),
                                  p(strong("PPS"), "- Points Per Shot per game")
                                  
-                        ),
-                        tabPanel("About", textOutput("about"))
+                        )
                       )
                     )
                   ) 
@@ -149,6 +148,10 @@ ui = shinyUI(
                          tabPanel("Summary", 
                                   h3("Summary of the Multiple Linear Regression"),
                                   verbatimTextOutput("summary_ML"))
+<<<<<<< HEAD
+=======
+                        
+>>>>>>> 46c09dee03360a6cbae82cd510caa8448fc81b16
                        )
                      )
                    )
