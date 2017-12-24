@@ -1,0 +1,293 @@
+---
+title: "R_markdown"
+author: "YUE WAN"
+date: "11/9/2017"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# transform excel into xlsx, modify column name
+```{r}
+library(readxl)
+Home_Guest_Scatter = read_excel("Home_Guest_scatterplot.xlsx")
+View(Home_Guest_Scatter)
+write.csv(Home_Guest_Scatter, "Home_Guest_Scatter.csv")
+
+Test_data = read_excel("2017-2018_Team_Data.xlsx")
+View(Test_data)
+write.csv(Test_data, "2017-2018_Team_Data.csv")
+```
+
+
+```{r}
+Home_data = read_excel("home data.xlsx")
+View(Home_data)
+```
+
+```{r}
+Guest_data = read_excel("guest data.xlsx")
+View(Guest_data)
+```
+
+# merge the two data set into one, add a name column with name "Home/Away"
+```{r}
+Guest_data = mutate(Guest_data, Home_Guest = "Guest")
+Home_data = mutate(Home_data, Home_Guest = "Home")
+Home_Guest_data = rbind(Guest_data, Home_data)
+View(Home_Guest_data)
+```
+
+# Team_data
+```{r}
+Team_data = read.csv("16-17 regular season team data.csv")
+```
+
+# changing column names
+```{r}
+names(Home_data)[names(Home_data) == "Mistakes"] = "Turnover"
+View(Home_data)
+```
+
+# NBA player grouped by position
+```{r}
+NBA_players %>% group_by(POS) %>% summarise(value = mean(TOr))
+```
+
+# effect of ages on team win_ratio
+```{r}
+age_effect = NBA_players %>% group_by(TEAM) %>% summarise(mean_AGE = mean(AGE))
+name_changed = (age_effect)[1]
+Team_data[1] = name_changed
+
+Team_data_1 = dplyr::inner_join(age_effect, Team_data, by = "TEAM")
+#View(Team_data_1)
+
+ggplot(Team_data_1) + geom_point(aes(x = mean_AGE, y = WIN_Ratio)) + ylim(0, 1)
+
+age_effect_model = lm(WIN. ~ PF, data = Team_data_1)
+summary(age_effect_model)
+```
+
+# Home/Guest Data Changing column names
+```{r}
+# dplyr package
+#Home_Guest_data = rename(Home_Guest_data, Shot_overall = "Hello")
+#Home_Guest_data = rename(Home_Guest_data, HR_overall = "Hit rate_overall")
+#names(Home_Guest_data)
+```
+
+# Home/Guest overall hit rate difference
+```{r}
+Home_Guest_data = read.csv("Home_Guest_data.csv")
+ggplot(Home_Guest_data) + geom_bar(aes(team, Hit.rate_overall, fill = Home_Guest), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+# Home/Guest # of Fouls difference
+```{r}
+ggplot(Home_Guest_data) + geom_bar(aes(team, Foul, fill = Home_Guest), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+# Home/Away Turnovers difference
+```{r}
+Home_Guest_data = rename(Home_Guest_data, Turnovers = "Mistakes")
+ggplot(Home_Guest_data) + geom_bar(aes(team, Turnovers, fill = Home_Guest), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+# Home/Away Average_point difference
+```{r}
+ggplot(Home_Guest_data) + geom_bar(aes(team, Average.points, fill = Home_Guest), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+# Home/Away Hit rate difference to Win Ratio
+I was thinking if small difference between performance in Guest/Home will indicate how powerful a team is. Afterall, the real powerful team will not care whether it is a Home team or a Guest team.
+
+```{r}
+Home_Guest_diff_HR = Home_Guest_data %>% group_by(team) %>% summarise(diff = abs(Hit.rate_overall[1] - Hit.rate_overall[2]))
+Team_Win_Ratio = select(Team_data, TEAM, WIN.)
+#View(Team_Win_Ratio)
+#View(Home_Guest_diff_HR)
+Team_Win_Ratio$TEAM = Home_Guest_diff_HR$team  # Apply same team name
+Team_Win_Ratio = rename(Team_Win_Ratio, team = TEAM) # rename variable name to make it the same
+
+Joint_Home_Guest_WR_diff = dplyr::inner_join(Team_Win_Ratio, Home_Guest_diff_HR, by = "team")
+View(Joint_Home_Guest_WR_diff)
+ggplot(Joint_Home_Guest_WR_diff) + geom_point(aes(x = diff, y = WIN.)) + xlim(0, 5) + ylim(0, 1)
+```
+However, the relationship is quite ambiguous.
+
+# lm to all variable
+```{r}
+
+```
+
+# NEW HOME/GUEST DATA
+```{r}
+#nba_home = read_html("https://stats.nba.com/teams/traditional/?sort=W_PCT&dir=-1&Season=2016-17&SeasonType=Regular%20Season&Location=Home")
+#nba_home %>% html_nodes("body > main > div.stats-container__inner > div > div.row > div > div > nba-stat-table > div.nba-stat-table > div.nba-stat-table__overflow") %>% html_table()
+
+#library(readxl)
+#Home_ver_2 = read_excel("Home_ver_2.xlsx")
+#Guest_ver_2 = read_excel("Road_ver_2.xlsx")
+```
+
+# Combined Home/Guest ver 2
+```{r}
+Home_ver_2 = mutate(Home_ver_2, Home_Guest = "Home")
+Guest_ver_2 = mutate(Guest_ver_2, Home_Guest = "Guest")
+
+Home_Guest_ver2 = rbind(Home_ver_2, Guest_ver_2)
+View(Home_Guest_ver2)
+```
+
+# Home/Away win ratio difference
+```{r}
+# change column name
+#Home_Guest_ver2 = rename(Home_Guest_ver2, WIN_Ratio = "WIN%")
+
+ggplot(Home_Guest_ver2) + geom_bar(aes(TEAM, WIN_Ratio, fill = Home_Guest), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+# Home/Away # of Fouls difference from data2
+```{r}
+ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, WIN_Ratio, fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+ggplot(Home_Guest_Visual) + geom_bar(aes(TEAM, FG_Ratio, fill = HOME_GUEST), position="dodge",stat="identity") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+
+
+# Tidy the Home_Guest_ver2 data for future visualization use
+```{r}
+#Home_Guest_ver2 = Home_Guest_ver2[names(Home_Guest_ver2) != "GP"
+#                                  && names(Home_Guest_ver2) != "MIN"]
+
+#Home_Guest_ver2 = rename(Home_Guest_ver2, FG_Ratio = "FG%")
+#Home_Guest_ver2 = rename(Home_Guest_ver2, 3P_Ratio = "3P%")
+#Home_Guest_ver2 = rename(Home_Guest_ver2, FT_Ratio = "FT%")
+#Home_Guest_ver2 = rename(Home_Guest_ver2, FG_Ratio = "FG%")
+
+Home_Guest_Visual = Home_Guest_ver2 %>% select(TEAM, HOME_GUEST, W:PFD)
+View(Home_Guest_Visual)
+```
+
+# use scatterplot to show home/away difference
+```{r}
+library("plotly")
+ g = ggplot(Home_Guest_Scatter) + geom_point(aes(x = WIN_Ratio_Guest, y = WIN_Ratio_Home, color = TEAM)) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlim(0, 1) + ylim(0, 1) + xlab("Win_Ratio_Guest") + ylab("Win_Ratio_Home")
+ ggplotly(g)
+```
+
+```{r}
+library(ggplot2)
+Home_Guest_Visual = read.csv("Home_Guest_Visual.csv")
+ggplot() + geom_point(aes(x = Home_Guest_Visual$WIN_Ratio[Home_Guest_Visual$HOME_GUEST == "Guest"], y = Home_Guest_Visual$WIN_Ratio[Home_Guest_Visual$HOME_GUEST == "Home"], color = Home_Guest_Visual$TEAM[1:30])) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlim(0, 1) + ylim(0, 1) + xlab("Win_Ratio_Guest") + ylab("Win_Ratio_Home")
+```
+
+
+
+
+
+# resolving the digits issue
+```{r}
+library(readxl)
+Team_data = read_excel("2016-2017 Team Data.xlsx")
+write.csv(Team_data, "2016-2017_Team_Data.csv")
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+#Team_data = rename(Team_data, WIN_Ratio = "WIN%")
+ggplot(Team_data) + geom_point(aes(x = BLK, y = STL))
+
+View(cor(Team_data[names(Team_data) != "TEAM"]))
+pairs(Team_data[19:22])
+```
+
+# shiny app:
+```{r}
+#ggplot(Home_Guest_Scatter) + geom_point(aes(x = WIN_Ratio_Guest, y = WIN_Ratio_Home, color = TEAM)) + geom_abline(intercept = 0, slope = 1, linetype = "dashed") + xlim(0, 1) + ylim(0, 1) + xlab("Win_Ratio_Guest") + ylab("Win_Ratio_Home")
+```
+
+```{r}
+mtcars
+mod = lm(mpg ~., data = mtcars)
+plot(mtcars$mpg, mtcars$drat)
+abline(mod)
+```
+
+```{r}
+Team_data_1718 = read.csv("2017-2018_Team_Data.csv")
+Team_data_1617 = read.csv("Team_Stats_2016_2017.csv")
+Team_PER_1617 = read.csv("Team PER 2016-2017.csv")
+View(Team_PER_1617)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+PER = Team_PER_1617$PER
+cur_wr = select(Team_data_1718, "TEAM", "WIN.", "PTS", "AST", "BLK", "STL", "TOV")
+cur_wr = mutate(cur_wr, PER = PER)
+View(cur_wr)
+
+coef = c(0.36594, -0.04014, 0.03592, 0.32312, -0.13788, -0.07773, 0.05026)
+coef[1]
+cur_wr = mutate(cur_wr, predicted = coef[1] + coef[2] * PTS + coef[3] * AST + coef[4] * BLK + coef[5] * STL + coef[6] * TOV + coef[7] * PER)
+#cur_wr = gather(cur_wr, key = "Type", value = "WR", WIN., predicted)
+ggplot(cur_wr) + geom_point(aes(x = TEAM, y = WIN.), color = "red") + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + geom_point(aes(x = TEAM, y = predicted + 4.3), color = "dodgerblue")
+```
+
+**(a)** Make plots
+```{r}
+library(faraway)
+library(ggplot2)
+View(dvisits)
+ggplot(dvisits) + geom_bar(aes(x = age * 100, y = doctorco), stat="identity")
+# This graph shows that when people gets older, particularly after 70-80, the number of times they go seeing the doctor in the past 2 weeks increase dramatically. Also, while high on the number of times 20 years old go see the doctor, such amount decrease first till age of 40 and then start increase gradually. 
+
+ggplot(dvisits) + geom_bar(aes(x = illness, y = doctorco), stat = "identity")
+# People will likely to see the doctor while having one illness. When the number of illness increases, people will less likely to see the doctor.
+```
+
+**(b)**
+```{r}
+chcond = rep(0, length(dvisits$chcond1))
+
+for(i in seq_along(dvisits$chcond1)){
+  if(dvisits$chcond1[i] == 0 && dvisits$chcond2[i] == 0){
+    chcond[i] = 0
+  }else if(dvisits$chcond1[i] == 1 && dvisits$chcond2[i] == 0){
+    chcond[i] = 1
+  }else{
+    chcond[i] = 2
+  }
+}
+ggplot(dvisits) + geom_bar(aes(x = chcond, y = doctorco), stat = "identity")
+# chcond = 1 is when chcond1 and chcond2 both equal to 0; chcond = 2 is when chcond1 is 1 while chcond2 is 0; chcond = 3 is when chcond1 is 0 while chcond2 is 1. The largest amount of times of seeing the doctor is chronic conditions but not limited in activity.
+```
+
+
+**(c)**
+```{r}
+mod = glm(doctorco ~ sex + agesq + income + levyplus + freepoor + freerepa + illness + actdays + hscore + factor(chcond), data = dvisits, family = poisson)
+summary(mod)
+mod$deviance
+```
+
+**(d)**
+```{r}
+plot(mod)
+```
+
+**(e)**
+```{r}
+mod_AIC = step(mod)
+```
+
