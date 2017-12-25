@@ -1,5 +1,5 @@
 ---
-title: "Players Stats"
+title: "Teams Stats"
 author: "Theodore Andrew"
 date: "12/9/2017"
 output: html_document
