@@ -1,0 +1,119 @@
+---
+title: "Players Stats"
+author: "Theodore Andrew"
+date: "12/9/2017"
+output: html_document
+---
+
+```{r}
+library(rvest)
+library(dplyr)
+#First table that we scrap from website
+stats = read_html("https://www.basketball-reference.com/leagues/NBA_2017_per_minute.html")
+
+nba_players_stats = stats %>% html_node("#per_minute_stats") %>% html_table()
+
+colnames(nba_players_stats)[1] = "RK"
+
+
+View(nba_players_stats)
+
+#----------------------------------------------------------------------------------------------
+
+#To clean the data and to remove duplication on players' name
+nba_players_stats_cleaned = nba_players_stats[!(PER_table$RK == "Rk"), ]
+
+nba_players_stats_cleaned = nba_players_stats_cleaned[!(PER_table_cleaned$Player == "Player" | PER_table_cleaned$Tm == "TOT"), -1]
+
+
+nba_players_stats_cleaned = nba_players_stats_cleaned[!duplicated(nba_players_stats_cleaned$Player, fromLast = TRUE),]
+
+View(nba_players_stats_cleaned)
+
+#----------------------------------------------------------------------------------------------
+
+#To select variable from players' stats table that we want to analyze
+nba_players_stats_final = select(nba_players_stats_cleaned, Player, Pos, Age, Tm, PTS, AST, TRB, BLK, STL, TOV)
+
+View(nba_players_stats_final)
+```
+
+
+```{r}
+#To get the information about players' PER
+PER_data = read_html("https://www.basketball-reference.com/leagues/NBA_2017_advanced.html")
+
+PER_table = PER_data %>% html_node("#advanced_stats") %>% html_table(header = TRUE)
+
+#----------------------------------------------------------------------------------------------
+#To clean the PER table and to remove the players' name duplication
+colnames(PER_table)[1] = "RK"
+
+PER_table_cleaned = PER_table[!(PER_table$RK == "Rk"), ]
+
+PER_table_cleaned = PER_table_cleaned[!(PER_table_cleaned$Player == "Player" | PER_table_cleaned$Tm == "TOT"), -1]
+
+PER_table_cleaned = PER_table_cleaned[!duplicated(PER_table_cleaned$Player, fromLast = TRUE),]
+
+View(PER_table_cleaned)
+
+#----------------------------------------------------------------------------------------------
+#To select variable that we want to analyze
+PER_table_final = select(PER_table_cleaned, Player, PER)
+
+View(PER_table_final)
+```
+
+
+```{r}
+#To merge players' stats table with PER data table
+merged_stat_PER = dplyr::full_join(nba_players_stats_final, PER_table_final, by = "Player")
+
+#----------------------------------------------------------------------------------------------
+#To get the data about teams names
+nba_teams = read.csv("16-17 NBA team.csv")
+
+nba_teams_name = select(nba_teams, Team)
+
+team_abbr = nba_players_stats_final %>% group_by(Tm) %>% summarise(a = sum(as.numeric(PTS)))
+
+team_abbr = team_abbr %>% select(-a)
+
+merged_team = cbind(nba_teams_name, team_abbr)
+merged_team[4,2] = "CHO"
+merged_team[5,2] = "CHI"
+
+#To merge teams names table with stats and PER table
+merged_stat_team = dplyr::full_join(merged_stat_PER, merged_team, by = "Tm")
+
+merged_stat_team$PTS = as.numeric(merged_stat_team$PTS)
+merged_stat_team$AST = as.numeric(merged_stat_team$AST)
+merged_stat_team$TRB = as.numeric(merged_stat_team$TRB)
+merged_stat_team$BLK = as.numeric(merged_stat_team$BLK)
+merged_stat_team$STL = as.numeric(merged_stat_team$STL)
+merged_stat_team$TOV = as.numeric(merged_stat_team$TOV)
+merged_stat_team$PER = as.numeric(merged_stat_team$PER)
+
+View(merged_stat_team)
+```
+
+
+```{r}
+#To group the table based on team names and summarise it based on the selected variable
+per_teams_stat = merged_stat_team %>% group_by(Team, Tm) %>% summarise(PTS = round(mean(PTS), digits = 1), AST = round(mean(AST), digits = 1), TRB = round(mean(TRB), digits = 1), BLK = round(mean(BLK), digits = 1), STL = round(mean(STL), digits = 1), TOV = round(mean(TOV), digits = 1), PER = round(mean(PER), digits = 1))
+colnames(per_teams_stat)[2] = "Team_Abbr"
+
+#----------------------------------------------------------------------------------------------
+#To append win ratio column into the grouped table
+nba_teams_2 = read.csv("2016-2017_Team_Data.csv")
+nba_teams_2 = select(nba_teams_2, TEAM, WIN.)
+colnames(nba_teams_2)[1] = "Team"
+
+per_teams_stat = dplyr::full_join(nba_teams_2, per_teams_stat, by = "Team")
+colnames(per_teams_stat)[2] = "Win_Ratio"
+per_teams_stat = per_teams_stat[c("Team", "Team_Abbr", "Win_Ratio", "PTS", "AST", "TRB", "BLK", "STL", "TOV", "PER")]
+per_teams_stat = per_teams_stat[order(per_teams_stat$Team, decreasing = F),]
+
+View(per_teams_stat)
+write.csv(per_teams_stat, file = "Team_Stats_2016_2017.csv")
+```
