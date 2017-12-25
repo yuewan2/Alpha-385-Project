@@ -148,10 +148,10 @@ ui = shinyUI(
                          tabPanel("Summary", 
                                   h3("Summary of the Multiple Linear Regression"),
                                   verbatimTextOutput("summary_ML"))
-<<<<<<< HEAD
-=======
-                        
->>>>>>> 46c09dee03360a6cbae82cd510caa8448fc81b16
+# <<<<<<< HEAD
+# =======
+#                         
+# >>>>>>> 46c09dee03360a6cbae82cd510caa8448fc81b16
                        )
                      )
                    )
@@ -263,15 +263,6 @@ server = shinyServer(function(input, output) {
     req(input$indep1 != '.', input$indep2 != '.', input$indep3 != '.', input$indep4 != '.', input$indep5 != '.', input$indep6 != '.')
     summary(fit_ML())
   })
-  
-  # output$graph_SL = renderPlot({
-  #   req(input$indep != '.')
-  #   if(input$line == "Yes") {
-  #     ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point() + geom_smooth(method = "lm")
-  #   } else{
-  #     ggplot(team_stats, aes_string(x = input$indep, y = "Win_Ratio")) + geom_point()
-  #   }
-  # })
   
   
 })
